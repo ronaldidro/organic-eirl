@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=OrganicSQL123
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - organic-network
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=Kaits;User Id=sa;Password=OrganicSQL123;TrustServerCertificate=True
+    ports:
+      - "5000:80"
+    depends_on:
+      - sqlserver
+    networks:
+      - organic-network
+    restart: on-failure
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - server
+    networks:
+      - organic-network
+
+networks:
+  organic-network:
+    driver: bridge
+
+volumes:
+  sqlserver_data:
